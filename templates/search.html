@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Search FDDs - Franchise Data Scraper{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h2>Search for Franchise Disclosure Documents</h2>
+        <p>Find FDDs from publicly available sources</p>
+    </div>
+
+    <div class="search-section">
+        <div class="search-form">
+            <input type="text" id="franchiseNameInput" placeholder="Enter franchise name (e.g., Jersey Mike's)"
+                   class="form-input" onkeypress="if(event.key === 'Enter') searchFDD()">
+            <button class="btn btn-primary" onclick="searchFDD()">Search FDD Sources</button>
+        </div>
+
+        <div id="searchResults" style="display: none;">
+            <h3>Search Results for: <span id="searchedName"></span></h3>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Popular FDD Sources</h3>
+        <div class="sources-grid">
+            <div class="source-card">
+                <h4>FranChimp</h4>
+                <p>18,000+ FDDs available. Subscription required for downloads.</p>
+                <a href="https://www.franchimp.com/?page=fdd" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+
+            <div class="source-card">
+                <h4>Wisconsin State Database</h4>
+                <p>Free access to FDDs registered in Wisconsin</p>
+                <a href="https://apps.wi.gov/dfi-sb/home" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+
+            <div class="source-card">
+                <h4>California DBO</h4>
+                <p>California Department of Business Oversight database</p>
+                <a href="https://docqnet.dbo.ca.gov/search.asp" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+
+            <div class="source-card">
+                <h4>Minnesota Commerce</h4>
+                <p>Minnesota Commerce Department franchise database</p>
+                <a href="https://mn.gov/commerce/consumers/your-business/licensing-and-registration/franchise/" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+
+            <div class="source-card">
+                <h4>FDD Exchange</h4>
+                <p>Large collection of FDD documents</p>
+                <a href="https://fddexchange.com/" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+
+            <div class="source-card">
+                <h4>NASAA</h4>
+                <p>North American Securities Administrators Association</p>
+                <a href="https://www.nasaa.org/" target="_blank" class="btn btn-sm">Visit Site</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>How to Find FDDs</h3>
+        <div class="info-box">
+            <h4>Free State Databases</h4>
+            <p>Several states require franchisors to register and make FDDs publicly available:</p>
+            <ul>
+                <li><strong>Wisconsin:</strong> Best free source for FDDs</li>
+                <li><strong>California:</strong> Comprehensive franchise database</li>
+                <li><strong>Minnesota:</strong> Commerce Department database</li>
+                <li><strong>Indiana:</strong> Free FDD access</li>
+            </ul>
+
+            <h4>Direct from Franchisors</h4>
+            <p>You can request FDDs directly from franchise companies. By law, they must provide it to serious prospects.</p>
+
+            <h4>Paid Services</h4>
+            <p>Services like FranChimp ($167/month) provide access to extensive FDD libraries with instant downloads.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function searchFDD() {
+    const franchiseName = document.getElementById('franchiseNameInput').value.trim();
+
+    if (!franchiseName) {
+        showNotification('error', 'Please enter a franchise name');
+        return;
+    }
+
+    const resultsDiv = document.getElementById('searchResults');
+    const searchedName = document.getElementById('searchedName');
+    const resultsList = document.getElementById('resultsList');
+
+    searchedName.textContent = franchiseName;
+    resultsList.innerHTML = '<div class="loading">Searching sources...</div>';
+    resultsDiv.style.display = 'block';
+
+    try {
+        const response = await fetch('/api/search-fdd', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ franchise_name: franchiseName })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayResults(data.sources);
+        } else {
+            resultsList.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        resultsList.innerHTML = '<div class="error">Failed to search. Please try again.</div>';
+    }
+}
+
+function displayResults(sources) {
+    const resultsList = document.getElementById('resultsList');
+
+    if (sources.length === 0) {
+        resultsList.innerHTML = '<div class="empty-state"><p>No sources found</p></div>';
+        return;
+    }
+
+    resultsList.innerHTML = sources.map(source => `
+        <div class="result-card">
+            <h4>${source.source}</h4>
+            <p><a href="${source.url}" target="_blank">${source.url}</a></p>
+            ${source.note ? `<p class="note">${source.note}</p>` : ''}
+            <a href="${source.url}" target="_blank" class="btn btn-sm">Visit Source</a>
+        </div>
+    `).join('');
+}
+
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

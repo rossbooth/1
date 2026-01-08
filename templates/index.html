@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Franchise Data Scraper{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h2>Franchise Data Dashboard</h2>
+        <div class="button-group">
+            <button id="processBtn" class="btn btn-primary">Process All PDFs</button>
+            <button id="exportCsvBtn" class="btn btn-secondary">Export CSV</button>
+            <button id="exportJsonBtn" class="btn btn-secondary">Export JSON</button>
+            <button id="exportExcelBtn" class="btn btn-secondary">Export Excel</button>
+            <button id="clearBtn" class="btn btn-danger">Clear Data</button>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-value" id="totalFranchises">0</div>
+            <div class="stat-label">Total Franchises</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgFee">$0</div>
+            <div class="stat-label">Avg Initial Fee</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgInvestment">$0</div>
+            <div class="stat-label">Avg Investment</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgRoyalty">0%</div>
+            <div class="stat-label">Avg Royalty</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Processed Franchises</h3>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search franchises..." class="form-input">
+        </div>
+        <div id="franchiseList" class="franchise-list">
+            <div class="empty-state">
+                <p>No franchises processed yet. Upload a PDF or process files from the data directory.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Franchise Detail Modal -->
+<div id="franchiseModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="franchiseDetail"></div>
+    </div>
+</div>
+
+<script>
+let franchises = [];
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadFranchises();
+    loadStats();
+});
+
+// Process all PDFs
+document.getElementById('processBtn').addEventListener('click', async function() {
+    this.disabled = true;
+    this.textContent = 'Processing...';
+
+    try {
+        const response = await fetch('/api/process-directory', {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('success', `Successfully processed ${data.count} files`);
+            loadFranchises();
+            loadStats();
+        } else {
+            showNotification('error', data.error);
+        }
+    } catch (error) {
+        showNotification('error', 'Failed to process files');
+    } finally {
+        this.disabled = false;
+        this.textContent = 'Process All PDFs';
+    }
+});
+
+// Export buttons
+document.getElementById('exportCsvBtn').addEventListener('click', () => exportData('csv'));
+document.getElementById('exportJsonBtn').addEventListener('click', () => exportData('json'));
+document.getElementById('exportExcelBtn').addEventListener('click', () => exportData('excel'));
+
+// Clear data
+document.getElementById('clearBtn').addEventListener('click', async function() {
+    if (!confirm('Are you sure you want to clear all data?')) return;
+
+    try {
+        const response = await fetch('/api/clear', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('success', 'Data cleared');
+            franchises = [];
+            renderFranchises();
+            loadStats();
+        }
+    } catch (error) {
+        showNotification('error', 'Failed to clear data');
+    }
+});
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = franchises.filter(f =>
+        f.franchise_name.toLowerCase().includes(searchTerm) ||
+        f.franchisor_name.toLowerCase().includes(searchTerm)
+    );
+    renderFranchises(filtered);
+});
+
+async function loadFranchises() {
+    try {
+        const response = await fetch('/api/franchises');
+        const data = await response.json();
+
+        if (data.success) {
+            franchises = data.franchises;
+            renderFranchises();
+        }
+    } catch (error) {
+        console.error('Failed to load franchises:', error);
+    }
+}
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+
+        if (data.success) {
+            const stats = data.stats;
+            document.getElementById('totalFranchises').textContent = stats.total_franchises;
+            document.getElementById('avgFee').textContent = formatCurrency(stats.avg_initial_fee);
+            document.getElementById('avgInvestment').textContent = formatCurrency(stats.avg_investment);
+            document.getElementById('avgRoyalty').textContent = stats.avg_royalty.toFixed(1) + '%';
+        }
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+function renderFranchises(data = franchises) {
+    const container = document.getElementById('franchiseList');
+
+    if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No franchises found.</p></div>';
+        return;
+    }
+
+    container.innerHTML = data.map((franchise, index) => `
+        <div class="franchise-card" onclick="showFranchiseDetail(${index})">
+            <div class="franchise-header">
+                <h4>${franchise.franchise_name}</h4>
+                <span class="franchise-badge">${franchise.has_item_19 ? 'Item 19' : 'No Item 19'}</span>
+            </div>
+            <div class="franchise-info">
+                <p><strong>Franchisor:</strong> ${franchise.franchisor_name}</p>
+                ${franchise.initial_franchise_fee ? `<p><strong>Initial Fee:</strong> ${formatCurrency(franchise.initial_franchise_fee)}</p>` : ''}
+                ${franchise.initial_investment_low && franchise.initial_investment_high ?
+                    `<p><strong>Investment:</strong> ${formatCurrency(franchise.initial_investment_low)} - ${formatCurrency(franchise.initial_investment_high)}</p>` : ''}
+                ${franchise.royalty_fee_percentage ? `<p><strong>Royalty:</strong> ${franchise.royalty_fee_percentage}%</p>` : ''}
+                ${franchise.total_franchises ? `<p><strong>Total Units:</strong> ${franchise.total_franchises}</p>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function showFranchiseDetail(index) {
+    const franchise = franchises[index];
+    const modal = document.getElementById('franchiseModal');
+    const detail = document.getElementById('franchiseDetail');
+
+    detail.innerHTML = `
+        <h2>${franchise.franchise_name}</h2>
+        <div class="detail-grid">
+            <div class="detail-section">
+                <h3>Basic Information</h3>
+                <p><strong>Franchisor:</strong> ${franchise.franchisor_name}</p>
+                ${franchise.website ? `<p><strong>Website:</strong> <a href="http://${franchise.website}" target="_blank">${franchise.website}</a></p>` : ''}
+                ${franchise.phone ? `<p><strong>Phone:</strong> ${franchise.phone}</p>` : ''}
+                ${franchise.address ? `<p><strong>Address:</strong> ${franchise.address}</p>` : ''}
+                ${franchise.city && franchise.state ? `<p><strong>Location:</strong> ${franchise.city}, ${franchise.state}</p>` : ''}
+            </div>
+
+            <div class="detail-section">
+                <h3>Financial Information</h3>
+                ${franchise.initial_franchise_fee ? `<p><strong>Initial Fee:</strong> ${formatCurrency(franchise.initial_franchise_fee)}</p>` : ''}
+                ${franchise.initial_investment_low && franchise.initial_investment_high ?
+                    `<p><strong>Investment Range:</strong> ${formatCurrency(franchise.initial_investment_low)} - ${formatCurrency(franchise.initial_investment_high)}</p>` : ''}
+                ${franchise.royalty_fee_percentage ? `<p><strong>Royalty Fee:</strong> ${franchise.royalty_fee_percentage}%</p>` : ''}
+                ${franchise.advertising_fee_percentage ? `<p><strong>Advertising Fee:</strong> ${franchise.advertising_fee_percentage}%</p>` : ''}
+            </div>
+
+            <div class="detail-section">
+                <h3>System Information</h3>
+                ${franchise.total_franchises ? `<p><strong>Total Franchises:</strong> ${franchise.total_franchises}</p>` : ''}
+                ${franchise.franchised_outlets ? `<p><strong>Franchised Outlets:</strong> ${franchise.franchised_outlets}</p>` : ''}
+                ${franchise.company_owned ? `<p><strong>Company Owned:</strong> ${franchise.company_owned}</p>` : ''}
+                ${franchise.year_founded ? `<p><strong>Year Founded:</strong> ${franchise.year_founded}</p>` : ''}
+                ${franchise.year_franchising_began ? `<p><strong>Franchising Since:</strong> ${franchise.year_franchising_began}</p>` : ''}
+            </div>
+
+            ${franchise.has_item_19 ? `
+            <div class="detail-section">
+                <h3>Financial Performance (Item 19)</h3>
+                ${franchise.avg_gross_sales ? `<p><strong>Avg Gross Sales:</strong> ${formatCurrency(franchise.avg_gross_sales)}</p>` : ''}
+                ${franchise.median_gross_sales ? `<p><strong>Median Gross Sales:</strong> ${formatCurrency(franchise.median_gross_sales)}</p>` : ''}
+                ${franchise.performance_sample_size ? `<p><strong>Sample Size:</strong> ${franchise.performance_sample_size} locations</p>` : ''}
+            </div>
+            ` : ''}
+        </div>
+        <button class="btn btn-danger" onclick="deleteFranchise(${index})">Delete</button>
+    `;
+
+    modal.style.display = 'block';
+}
+
+// Close modal
+document.querySelector('.close').addEventListener('click', function() {
+    document.getElementById('franchiseModal').style.display = 'none';
+});
+
+async function deleteFranchise(index) {
+    if (!confirm('Delete this franchise?')) return;
+
+    try {
+        const response = await fetch(`/api/delete/${index}`, { method: 'DELETE' });
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('success', data.message);
+            document.getElementById('franchiseModal').style.display = 'none';
+            loadFranchises();
+            loadStats();
+        }
+    } catch (error) {
+        showNotification('error', 'Failed to delete franchise');
+    }
+}
+
+async function exportData(format) {
+    window.location.href = `/api/export/${format}`;
+}
+
+function formatCurrency(value) {
+    if (!value) return 'N/A';
+    return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

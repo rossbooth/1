@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Data Visualization - Franchise Data Scraper{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h2>Data Visualization</h2>
+        <p>Visual analysis of franchise data</p>
+    </div>
+
+    <div id="noDataMessage" class="empty-state" style="display: none;">
+        <p>No data available for visualization. Please process some FDD files first.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+
+    <div id="visualizations">
+        <div class="chart-container">
+            <h3>Initial Investment Comparison</h3>
+            <div id="investmentChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Fee Structure Comparison</h3>
+            <div id="feeChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Franchise System Size</h3>
+            <div id="systemSizeChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Item 19 Performance Data</h3>
+            <div id="performanceChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Investment Range Distribution</h3>
+            <div id="distributionChart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h3>Royalty vs Advertising Fees</h3>
+            <div id="feesScatterChart"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let franchises = [];
+
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadFranchises();
+
+    if (franchises.length === 0) {
+        document.getElementById('noDataMessage').style.display = 'block';
+        document.getElementById('visualizations').style.display = 'none';
+        return;
+    }
+
+    createInvestmentChart();
+    createFeeChart();
+    createSystemSizeChart();
+    createPerformanceChart();
+    createDistributionChart();
+    createFeesScatterChart();
+});
+
+async function loadFranchises() {
+    try {
+        const response = await fetch('/api/franchises');
+        const data = await response.json();
+        if (data.success) {
+            franchises = data.franchises;
+        }
+    } catch (error) {
+        console.error('Failed to load franchises:', error);
+    }
+}
+
+function createInvestmentChart() {
+    const data = franchises
+        .filter(f => f.initial_investment_low && f.initial_investment_high)
+        .map(f => ({
+            name: f.franchise_name,
+            low: f.initial_investment_low,
+            high: f.initial_investment_high
+        }));
+
+    if (data.length === 0) return;
+
+    const trace = {
+        x: data.map(d => d.name),
+        y: data.map(d => d.high),
+        type: 'bar',
+        name: 'Max Investment',
+        marker: { color: '#4CAF50' }
+    };
+
+    const trace2 = {
+        x: data.map(d => d.name),
+        y: data.map(d => d.low),
+        type: 'bar',
+        name: 'Min Investment',
+        marker: { color: '#2196F3' }
+    };
+
+    const layout = {
+        barmode: 'group',
+        xaxis: { title: 'Franchise' },
+        yaxis: { title: 'Investment ($)' },
+        height: 400
+    };
+
+    Plotly.newPlot('investmentChart', [trace2, trace], layout);
+}
+
+function createFeeChart() {
+    const data = franchises
+        .filter(f => f.initial_franchise_fee)
+        .map(f => ({
+            name: f.franchise_name,
+            fee: f.initial_franchise_fee
+        }))
+        .sort((a, b) => b.fee - a.fee)
+        .slice(0, 10);
+
+    if (data.length === 0) return;
+
+    const trace = {
+        x: data.map(d => d.name),
+        y: data.map(d => d.fee),
+        type: 'bar',
+        marker: { color: '#FF9800' }
+    };
+
+    const layout = {
+        xaxis: { title: 'Franchise' },
+        yaxis: { title: 'Initial Fee ($)' },
+        height: 400
+    };
+
+    Plotly.newPlot('feeChart', [trace], layout);
+}
+
+function createSystemSizeChart() {
+    const data = franchises
+        .filter(f => f.total_franchises)
+        .map(f => ({
+            name: f.franchise_name,
+            total: f.total_franchises
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+
+    if (data.length === 0) return;
+
+    const trace = {
+        labels: data.map(d => d.name),
+        values: data.map(d => d.total),
+        type: 'pie',
+        hole: 0.4
+    };
+
+    const layout = {
+        height: 400
+    };
+
+    Plotly.newPlot('systemSizeChart', [trace], layout);
+}
+
+function createPerformanceChart() {
+    const data = franchises
+        .filter(f => f.has_item_19 && f.avg_gross_sales)
+        .map(f => ({
+            name: f.franchise_name,
+            sales: f.avg_gross_sales
+        }))
+        .sort((a, b) => b.sales - a.sales);
+
+    if (data.length === 0) {
+        document.getElementById('performanceChart').innerHTML =
+            '<p class="chart-note">No Item 19 performance data available</p>';
+        return;
+    }
+
+    const trace = {
+        x: data.map(d => d.name),
+        y: data.map(d => d.sales),
+        type: 'bar',
+        marker: { color: '#9C27B0' }
+    };
+
+    const layout = {
+        xaxis: { title: 'Franchise' },
+        yaxis: { title: 'Avg Gross Sales ($)' },
+        height: 400
+    };
+
+    Plotly.newPlot('performanceChart', [trace], layout);
+}
+
+function createDistributionChart() {
+    const investments = franchises
+        .filter(f => f.initial_investment_high)
+        .map(f => f.initial_investment_high);
+
+    if (investments.length === 0) return;
+
+    const trace = {
+        x: investments,
+        type: 'histogram',
+        marker: { color: '#00BCD4' },
+        nbinsx: 20
+    };
+
+    const layout = {
+        xaxis: { title: 'Investment Amount ($)' },
+        yaxis: { title: 'Number of Franchises' },
+        height: 400
+    };
+
+    Plotly.newPlot('distributionChart', [trace], layout);
+}
+
+function createFeesScatterChart() {
+    const data = franchises
+        .filter(f => f.royalty_fee_percentage && f.advertising_fee_percentage)
+        .map(f => ({
+            name: f.franchise_name,
+            royalty: f.royalty_fee_percentage,
+            advertising: f.advertising_fee_percentage
+        }));
+
+    if (data.length === 0) {
+        document.getElementById('feesScatterChart').innerHTML =
+            '<p class="chart-note">Not enough fee data available for scatter plot</p>';
+        return;
+    }
+
+    const trace = {
+        x: data.map(d => d.royalty),
+        y: data.map(d => d.advertising),
+        mode: 'markers',
+        type: 'scatter',
+        text: data.map(d => d.name),
+        marker: {
+            size: 12,
+            color: '#E91E63'
+        }
+    };
+
+    const layout = {
+        xaxis: { title: 'Royalty Fee (%)' },
+        yaxis: { title: 'Advertising Fee (%)' },
+        height: 400,
+        hovermode: 'closest'
+    };
+
+    Plotly.newPlot('feesScatterChart', [trace], layout);
+}
+</script>
+{% endblock %}

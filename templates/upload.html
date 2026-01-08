@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Upload FDD - Franchise Data Scraper{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h2>Upload FDD Documents</h2>
+        <p>Upload PDF files of Franchise Disclosure Documents to extract data</p>
+    </div>
+
+    <div class="upload-section">
+        <div class="upload-box" id="uploadBox">
+            <div class="upload-icon">📄</div>
+            <h3>Drop PDF files here or click to browse</h3>
+            <p>Supports FDD documents in PDF format (max 50MB)</p>
+            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                Select Files
+            </button>
+        </div>
+
+        <div id="uploadStatus" class="upload-status" style="display: none;">
+            <h3>Upload Progress</h3>
+            <div id="fileList"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Recently Uploaded</h3>
+        <div id="recentUploads" class="franchise-list">
+            <div class="empty-state">
+                <p>No files uploaded yet</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const uploadBox = document.getElementById('uploadBox');
+const fileInput = document.getElementById('fileInput');
+const uploadStatus = document.getElementById('uploadStatus');
+const fileList = document.getElementById('fileList');
+const recentUploads = document.getElementById('recentUploads');
+
+// Drag and drop
+uploadBox.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadBox.classList.add('drag-over');
+});
+
+uploadBox.addEventListener('dragleave', () => {
+    uploadBox.classList.remove('drag-over');
+});
+
+uploadBox.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadBox.classList.remove('drag-over');
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+    if (files.length > 0) {
+        handleFiles(files);
+    } else {
+        showNotification('error', 'Please drop PDF files only');
+    }
+});
+
+// File input
+fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+});
+
+async function handleFiles(files) {
+    uploadStatus.style.display = 'block';
+    fileList.innerHTML = '';
+
+    for (const file of files) {
+        await uploadFile(file);
+    }
+
+    // Reload recent uploads
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 2000);
+}
+
+async function uploadFile(file) {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.innerHTML = `
+        <div class="file-name">${file.name}</div>
+        <div class="file-status">Uploading...</div>
+    `;
+    fileList.appendChild(fileItem);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            fileItem.querySelector('.file-status').innerHTML =
+                `<span class="success">✓ ${data.message}</span>`;
+        } else {
+            fileItem.querySelector('.file-status').innerHTML =
+                `<span class="error">✗ ${data.error}</span>`;
+        }
+    } catch (error) {
+        fileItem.querySelector('.file-status').innerHTML =
+            `<span class="error">✗ Upload failed</span>`;
+    }
+}
+
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

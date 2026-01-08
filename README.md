@@ -1,9 +1,10 @@
 # Franchise Data Scraper
 
-A Python application for extracting structured data from Franchise Disclosure Documents (FDDs). This tool automates the process of parsing FDD PDFs and extracting key franchise information including financial data, fees, franchise counts, and performance metrics.
+A comprehensive Python application for extracting structured data from Franchise Disclosure Documents (FDDs). This tool automates the process of parsing FDD PDFs and extracting key franchise information including financial data, fees, franchise counts, and performance metrics.
 
 ## Features
 
+### Core Functionality
 - **Automated PDF Parsing**: Extract text and data from FDD PDF documents
 - **Comprehensive Data Extraction**: Captures key information from multiple FDD items:
   - Item 5: Initial fees and investment requirements
@@ -13,7 +14,17 @@ A Python application for extracting structured data from Franchise Disclosure Do
   - Item 20: Franchise unit counts and locations
 - **Multiple Export Formats**: Export data to CSV, JSON, or Excel
 - **Batch Processing**: Process multiple FDD files at once
-- **CLI Interface**: Easy-to-use command-line interface
+
+### Web Application
+- **Modern Web Interface**: Browse and analyze franchise data through a responsive web UI
+- **Interactive Dashboard**: View statistics and summaries of processed franchises
+- **Data Visualization**: Interactive charts and graphs using Plotly
+- **FDD Search**: Search for FDDs from publicly available sources
+- **Upload Interface**: Drag-and-drop PDF upload with real-time processing
+- **RESTful API**: JSON API for programmatic access to franchise data
+
+### CLI Interface
+- **Command-Line Tool**: Traditional CLI for batch processing and automation
 
 ## Data Extracted
 
@@ -71,7 +82,31 @@ mkdir -p data output
 
 ## Usage
 
-### Quick Start
+### Web Application (Recommended)
+
+The easiest way to use the Franchise Data Scraper is through the web interface:
+
+1. Start the web server:
+```bash
+python app.py
+```
+
+2. Open your browser and navigate to:
+```
+http://localhost:5000
+```
+
+3. Use the web interface to:
+   - **Dashboard**: View all processed franchises and statistics
+   - **Upload**: Drag and drop FDD PDFs to process them
+   - **Search**: Find FDDs from publicly available sources
+   - **Visualize**: View interactive charts and comparisons
+
+The web app runs on `http://localhost:5000` by default. The interface is responsive and works on desktop, tablet, and mobile devices.
+
+### CLI Quick Start
+
+For command-line usage:
 
 1. Place your FDD PDF files in the `data/` directory
 2. Run the scraper:
