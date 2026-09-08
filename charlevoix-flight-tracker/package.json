@@ -1,0 +1,22 @@
+{
+  "name": "charlevoix-flight-tracker",
+  "version": "1.0.0",
+  "description": "Live flight tracker for Charlevoix Municipal Airport (KCVX) - see what is flying overhead and who owns it.",
+  "type": "module",
+  "main": "server/index.js",
+  "engines": { "node": ">=18.17" },
+  "scripts": {
+    "start": "node server/index.js",
+    "demo": "node server/index.js --demo",
+    "import-registry": "node scripts/import-faa-registry.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.0",
+    "better-sqlite3": "^11.0.0",
+    "express": "^5.1.0",
+    "leaflet": "^1.9.4"
+  },
+  "license": "MIT",
+  "private": true
+}

@@ -1,0 +1,4 @@
+node_modules/
+# Your own settings (house location etc.) and the flight log stay local.
+config.json
+data/

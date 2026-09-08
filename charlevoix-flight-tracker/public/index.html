@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charlevoix Flight Tracker</title>
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">✈</span>
+    <div>
+      <h1>Charlevoix Flight Tracker</h1>
+      <p class="brand-sub" id="brandSub">Charlevoix Municipal Airport (KCVX)</p>
+    </div>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Starting up…</span>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="map-pane">
+    <div id="map" role="application" aria-label="Map of aircraft near Charlevoix"></div>
+    <div class="map-legend" id="mapLegend">
+      <span><i class="swatch ground"></i>On the ground</span>
+      <span><i class="swatch low"></i>Below 5,000 ft</span>
+      <span><i class="swatch mid"></i>5,000–20,000 ft</span>
+      <span><i class="swatch high"></i>Above 20,000 ft</span>
+    </div>
+  </section>
+
+  <aside class="side">
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" role="tab" data-tab="now" aria-selected="true">In the sky now</button>
+      <button class="tab" role="tab" data-tab="activity" aria-selected="false">Airport activity</button>
+      <button class="tab" role="tab" data-tab="history" aria-selected="false">History</button>
+      <button class="tab" role="tab" data-tab="lookup" aria-selected="false">Look up a plane</button>
+    </nav>
+
+    <div class="panel" id="panel-now" role="tabpanel">
+      <p class="hint" id="nowHint">Planes are listed closest to your house first.</p>
+      <div id="nowList" class="list"></div>
+    </div>
+
+    <div class="panel is-hidden" id="panel-activity" role="tabpanel">
+      <div class="summary" id="activitySummary"></div>
+      <div class="filters">
+        <label>Show
+          <select id="activityDays">
+            <option value="1">Today</option>
+            <option value="2">Yesterday and today</option>
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+        </label>
+        <label>Type
+          <select id="activityKind">
+            <option value="airport" selected>Takeoffs &amp; landings</option>
+            <option value="departure">Takeoffs only</option>
+            <option value="arrival">Landings only</option>
+            <option value="overflight">Passed overhead</option>
+            <option value="all">Everything</option>
+          </select>
+        </label>
+      </div>
+      <div id="activityList" class="list"></div>
+    </div>
+
+    <div class="panel is-hidden" id="panel-history" role="tabpanel">
+      <div id="historyChart" class="chart"></div>
+      <h2 class="section-title">Regular visitors</h2>
+      <p class="hint">Aircraft that use the airport most often (last 90 days).</p>
+      <div id="regularsList" class="list"></div>
+      <h2 class="section-title">Tracker totals</h2>
+      <div id="statsBlock" class="stats"></div>
+    </div>
+
+    <div class="panel is-hidden" id="panel-lookup" role="tabpanel">
+      <label class="search-label" for="searchInput">Search by tail number or owner</label>
+      <input id="searchInput" class="search" type="search" placeholder="N400CV, or an owner's name" autocomplete="off">
+      <div id="searchResults" class="list"></div>
+    </div>
+  </aside>
+</main>
+
+<div class="detail is-hidden" id="detail" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="detail-inner">
+    <button class="detail-close" id="detailClose" aria-label="Close">×</button>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

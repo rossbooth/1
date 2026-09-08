@@ -1,0 +1,5 @@
+CODE,MFR,MODEL,TYPE-ACFT,TYPE-ENG,AC-CAT,BUILD-CERT-IND,NO-ENG,NO-SEATS,AC-WEIGHT,SPEED,TC-DATA-SHEET,TC-DATA-HOLDER,
+2072710,CESSNA                       ,172N                ,4,1,1,0,1,4 ,CLASS 1,108,3A12       ,TEXTRON AVIATION      ,
+1370232,CESSNA                       ,208B                ,4,2,1,0,1,14,CLASS 2,175,A37CE      ,TEXTRON AVIATION      ,
+1384415,BOEING                       ,737-700             ,5,5,1,0,2,149,CLASS 3,485,A16WE     ,BOEING                ,
+0510101,PIPER                        ,PA-28-140           ,4,1,1,0,1,4 ,CLASS 1,109,2A13       ,PIPER AIRCRAFT INC    ,
