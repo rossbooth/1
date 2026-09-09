@@ -6,8 +6,10 @@ import { TrackerService } from './service.js';
 import { createApp } from './app.js';
 import { demoFeed } from './demo.js';
 import { registryCount } from './faa.js';
+import { openInBrowser } from './open-browser.js';
 
 const demo = process.argv.includes('--demo');
+const noOpen = process.argv.includes('--no-open') || process.env.OPEN === '0';
 
 const config = loadConfig();
 const db = getDb();
@@ -34,6 +36,7 @@ const server = app.listen(port, () => {
   }
   console.log('');
   service.start();
+  if (!noOpen) openInBrowser(`http://localhost:${port}`);
 });
 
 function shutdown() {

@@ -22,7 +22,7 @@ npm install
 npm start
 ```
 
-Then open **http://localhost:4903** in your browser.
+Your browser opens by itself at **http://localhost:4903**. If it does not, type that address in yourself.
 
 Leave the Terminal window open — that is the tracker running. To stop it, click
 the Terminal window and press `Control` + `C`.
@@ -163,7 +163,8 @@ Set `PORT=8080 npm start` to override the port for one run.
 
 | Command | What it does |
 | --- | --- |
-| `npm start` | Run the tracker and the website. |
+| `npm start` | Run the tracker and the website, and open it in your browser. |
+| `npm start -- --no-open` | Same, without opening a browser (for a headless machine). |
 | `npm run demo` | Run with invented aircraft — useful for a look around with no live data. |
 | `npm run import-registry` | Download and import the FAA aircraft register. |
 | `npm run import-registry -- <file>` | Import a `ReleasableAircraft.zip` you already downloaded. |
