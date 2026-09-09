@@ -6,6 +6,7 @@ import { TrackerService } from './service.js';
 import { createApp } from './app.js';
 import { demoFeed } from './demo.js';
 import { registryCount } from './faa.js';
+import { driverName } from './sqlite.js';
 import { openInBrowser } from './open-browser.js';
 
 const demo = process.argv.includes('--demo');
@@ -30,6 +31,7 @@ const server = app.listen(port, () => {
   console.log(`  Open this in your browser:   http://localhost:${port}`);
   console.log(`  Watching:                    ${config.radiusNm} nm around ${config.airport.icao}`);
   console.log(`  Owner lookups:               ${rows ? `${rows.toLocaleString()} aircraft on file` : 'not loaded yet -- run: npm run import-registry'}`);
+  console.log(`  Database:                    ${driverName()}`);
   if (demo) console.log('  Mode:                        DEMO (made-up aircraft, no live data)');
   if (config.home.approximate) {
     console.log('  Note:                        the house pin is approximate -- drag it to your address');

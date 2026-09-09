@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import Database from 'better-sqlite3';
+import { createDatabase } from './sqlite.js';
 import { ROOT } from './config.js';
 
 export const DB_PATH = path.join(ROOT, 'data', 'flights.db');
@@ -107,7 +107,7 @@ let db = null;
 export function getDb(dbPath = DB_PATH) {
   if (db) return db;
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  db = new Database(dbPath);
+  db = createDatabase(dbPath);
   db.pragma('journal_mode = WAL');
   db.pragma('busy_timeout = 5000');
   db.exec(SCHEMA);
@@ -117,7 +117,7 @@ export function getDb(dbPath = DB_PATH) {
 /** Used by tests to get a throwaway database. */
 export function openDatabase(dbPath) {
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  const handle = new Database(dbPath);
+  const handle = createDatabase(dbPath);
   handle.pragma('journal_mode = WAL');
   handle.exec(SCHEMA);
   return handle;

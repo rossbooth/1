@@ -14,7 +14,8 @@ to make.
 ## Start here
 
 You need [Node.js](https://nodejs.org) installed (the big green "LTS" download
-button). Then open Terminal, and run these three lines one at a time:
+button), version 20 or newer. Then open Terminal and run these three lines one
+at a time:
 
 ```bash
 cd charlevoix-flight-tracker
@@ -176,6 +177,16 @@ Set `PORT=8080 npm start` to override the port for one run.
 
 **"command not found: npm"** — Node.js is not installed. Get it from
 [nodejs.org](https://nodejs.org) and try again.
+
+**`npm install` prints errors about `better-sqlite3`, `node-gyp` or `climits`**
+— harmless. That package is optional: it is a faster database driver that has
+to be compiled, and compiling needs developer tools installed. When it is not
+available the tracker uses the SQLite built into Node instead. The startup
+banner shows which one it picked. Everything works either way.
+
+**`npm error EACCES` mentioning `.npm/_cacache`** — an old npm bug left
+root-owned files in your cache. npm prints the fix; on a Mac it is
+`sudo chown -R $(id -u):$(id -g) ~/.npm`, then run `npm install` again.
 
 **The page says "Live data unavailable"** — the feeds are volunteer-run and go
 down sometimes. The tracker retries automatically and tries a different source

@@ -125,10 +125,10 @@ export class Store {
 
   eventCount(opts = {}) {
     const { since } = opts;
-    return this.db
-      .prepare(`SELECT kind, COUNT(*) AS n FROM events ${since ? 'WHERE ts >= @since' : ''} GROUP BY kind`)
-      .all({ since })
-      .reduce((acc, r) => ({ ...acc, [r.kind]: r.n }), { departure: 0, arrival: 0, overflight: 0 });
+    const rows = since
+      ? this.db.prepare('SELECT kind, COUNT(*) AS n FROM events WHERE ts >= ? GROUP BY kind').all(since)
+      : this.db.prepare('SELECT kind, COUNT(*) AS n FROM events GROUP BY kind').all();
+    return rows.reduce((acc, r) => ({ ...acc, [r.kind]: r.n }), { departure: 0, arrival: 0, overflight: 0 });
   }
 
   /** Aircraft seen most often, for a "regulars" list. */
