@@ -47,10 +47,9 @@
 
 * { box-sizing: border-box; }
 
-html, body {
-  height: 100%;
-  margin: 0;
-}
+html { height: 100%; }
+
+body { margin: 0; }
 
 body {
   background: var(--bg);
@@ -62,7 +61,10 @@ body {
   text-rendering: optimizeLegibility;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* Sized from the viewport with a hard floor, so the app still has room when
+     it is embedded in a frame that imposes no height of its own. */
+  min-height: 100dvh;
+  overflow: auto;
 }
 
 /* Numbers line up in columns everywhere. */
@@ -176,7 +178,7 @@ body {
   flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
-  min-height: 0;
+  min-height: max(560px, calc(100dvh - 58px));
 }
 
 .map-pane {
@@ -838,10 +840,11 @@ select:focus, .search:focus {
 
   .layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 46vh auto;
+    grid-template-rows: minmax(320px, 46dvh) auto;
+    min-height: 0;
   }
 
-  .map-pane { min-height: 46vh; }
+  .map-pane { min-height: 320px; }
 
   .side { border-left: 0; border-top: 1px solid var(--hairline); }
 
