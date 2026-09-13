@@ -47,6 +47,14 @@ The map opens with a **🏠 Home** pin at an approximate spot on Lake Shore Driv
 distance and "look this way" hint is measured from that pin, so it is worth
 getting right.
 
+### Just want to look at it?
+
+Open **`standalone.html`** by double-clicking it. That is the whole tracker in
+one file -- no install, no Terminal, no server. It shows live aircraft if your
+browser can reach the ADS-B feeds, and invented traffic if it cannot. The full
+version above is still the one to run day to day: it keeps a database, so the
+takeoff and landing log survives between sessions.
+
 ---
 
 ## What each part of the site does

@@ -12,7 +12,8 @@
     "demo": "node server/index.js --demo",
     "import-registry": "node scripts/import-faa-registry.js",
     "test": "node --test test/*.test.js",
-    "setup": "bash scripts/setup.sh"
+    "setup": "bash scripts/setup.sh",
+    "build-standalone": "node scripts/build-standalone.js"
   },
   "dependencies": {
     "adm-zip": "^0.6.0",

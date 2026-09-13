@@ -13,7 +13,16 @@ npm run demo                   # invented traffic, no network needed
 npm test                       # 45 tests, ~1s
 npm run import-registry        # download + import the FAA aircraft register
 npm run import-registry -- <path>   # import a zip/folder you already have
+npm run build-standalone       # rebuild standalone.html (one file, no server)
 ```
+
+`standalone.html` is the whole app in a single file: the real front-end and
+the real tracker modules, with the browser runtime in
+`scripts/standalone-runtime.js` standing in for the Express API. It is opened
+by double-clicking, needs no install, and tries the live feeds first, falling
+back to demo traffic when the browser cannot reach them (the feeds have to
+send CORS headers). It is a build output -- edit the sources and rebuild,
+never edit it by hand.
 
 Force a database driver with `SQLITE_DRIVER=node` or `SQLITE_DRIVER=better`.
 Skip the browser launch with `--no-open` or `OPEN=0`. Override the port with
