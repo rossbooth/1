@@ -590,6 +590,25 @@ select:focus, .search:focus {
   margin-top: 10px;
 }
 
+/* statBox() builds <b>value</b> followed by a bare text node, so the label
+   cannot carry a class -- style the box for the label and the <b> for the
+   figure. */
+.stats > div {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.stats > div b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 26px;
+  font-weight: 620;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------------- chart ---------------- */
 
 .chart {
