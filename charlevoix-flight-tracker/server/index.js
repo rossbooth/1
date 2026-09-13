@@ -1,4 +1,4 @@
-import { loadConfig } from './config.js';
+import { loadConfig, ROOT } from './config.js';
 import { getDb } from './db.js';
 import { Store } from './store.js';
 import { AdsbClient } from './adsb.js';
@@ -8,6 +8,8 @@ import { demoFeed } from './demo.js';
 import { registryCount } from './faa.js';
 import { driverName } from './sqlite.js';
 import { openInBrowser } from './open-browser.js';
+import { codeVersion } from './version.js';
+import path from 'node:path';
 
 const demo = process.argv.includes('--demo');
 const noOpen = process.argv.includes('--no-open') || process.env.OPEN === '0';
@@ -32,6 +34,11 @@ const server = app.listen(port, () => {
   console.log(`  Watching:                    ${config.radiusNm} nm around ${config.airport.icao}`);
   console.log(`  Owner lookups:               ${rows ? `${rows.toLocaleString()} aircraft on file` : 'not loaded yet -- run: npm run import-registry'}`);
   console.log(`  Database:                    ${driverName()}`);
+  console.log(`  Serving files from:          ${path.join(ROOT, 'public')}`);
+  const v = codeVersion();
+  if (v) {
+    console.log(`  Code version:                ${v.commit} on ${v.branch}${v.dirty ? ' (uncommitted changes)' : ''}`);
+  }
   if (demo) console.log('  Mode:                        DEMO (made-up aircraft, no live data)');
   if (config.home.approximate) {
     console.log('  Note:                        the house pin is approximate -- drag it to your address');
