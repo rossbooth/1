@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c10">
 <title>Charlevoix Flight Tracker</title>
 <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="/styles.css">
@@ -72,7 +74,13 @@
     </div>
 
     <div class="panel is-hidden" id="panel-history" role="tabpanel">
+      <h2 class="section-title">Daily movements</h2>
       <div id="historyChart" class="chart"></div>
+      <div id="chartLegend" class="chart-legend">
+        <span><i class="dep"></i>Takeoffs</span>
+        <span><i class="arr"></i>Landings</span>
+      </div>
+      <div id="chartEmpty"></div>
       <h2 class="section-title">Regular visitors</h2>
       <p class="hint">Aircraft that use the airport most often (last 90 days).</p>
       <div id="regularsList" class="list"></div>

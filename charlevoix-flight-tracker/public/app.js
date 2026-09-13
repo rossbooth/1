@@ -100,11 +100,11 @@
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
   const altColor = (a) => {
-    if (a.onGround) return 'var(--ground)';
-    if (a.altitudeFt === null || a.altitudeFt === undefined) return 'var(--ground)';
-    if (a.altitudeFt < 5000) return 'var(--low)';
-    if (a.altitudeFt < 20000) return 'var(--mid)';
-    return 'var(--high)';
+    if (a.onGround) return 'var(--alt-ground)';
+    if (a.altitudeFt === null || a.altitudeFt === undefined) return 'var(--alt-ground)';
+    if (a.altitudeFt < 5000) return 'var(--alt-low)';
+    if (a.altitudeFt < 20000) return 'var(--alt-mid)';
+    return 'var(--alt-high)';
   };
 
   /* ---------------- map ---------------- */
@@ -113,22 +113,25 @@
     const map = L.map('map', { zoomControl: true, attributionControl: true })
       .setView([config.airport.lat, config.airport.lon], 11);
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors',
+    // Dark basemap, so the aircraft are the brightest thing on the screen.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     }).addTo(map);
 
     L.circleMarker([config.airport.lat, config.airport.lon], {
-      radius: 7, color: '#0b63c5', fillColor: '#0b63c5', fillOpacity: 0.9, weight: 2,
+      radius: 6, color: '#3987e5', fillColor: '#3987e5', fillOpacity: 0.9, weight: 2,
     })
       .addTo(map)
       .bindTooltip(`${config.airport.icao} — ${config.airport.name}`, { permanent: false });
 
     // Rings at 5 and 10 miles from the house, so distances mean something.
+    // Leaflet writes `color` straight into an SVG stroke attribute, where a
+    // CSS variable would not resolve -- it has to be a literal.
     for (const mi of [5, 10]) {
       L.circle([config.home.lat, config.home.lon], {
-        radius: mi * 1609.34, color: 'var(--ink-faint)', weight: 1, opacity: 0.35,
-        fill: false, dashArray: '4 6',
+        radius: mi * 1609.34, color: '#8e98a8', weight: 1, opacity: 0.28,
+        fill: false, dashArray: '3 7',
       }).addTo(map);
     }
 
@@ -365,9 +368,13 @@
 
     const list = $('activityList');
     if (!data.events.length) {
+      const days = Number($('activityDays').value) || 1;
       fill(list, [emptyState(
-        'No movements recorded yet',
-        'The log fills up as the tracker runs. Leave it running and check back later.',
+        days > 1 ? `Nothing logged in the last ${days} days` : 'Nothing logged today',
+        'Takeoffs and landings are worked out from how aircraft move, so one only '
+        + 'appears after the tracker has watched it happen — and up to two minutes '
+        + 'later if the aircraft dropped off the receivers on the way down. '
+        + 'KCVX is quiet, and the log only covers time the tracker was actually running.',
       )]);
       return;
     }
@@ -381,21 +388,60 @@
     return box;
   }
 
-  async function loadHistory() {
-    const data = await getJson('/api/stats');
+  /* Daily movements, takeoffs stacked on landings. Two series, so the legend
+     is always present; the per-day numbers live in the hover tooltip rather
+     than as a label on every bar. */
+  const PLOT_PX = 92;
 
+  function renderChart(days) {
     const chart = $('historyChart');
-    const days = data.daily ?? [];
+    const legend = $('chartLegend');
+    const total = days.reduce((n, d) => n + d.departures + d.arrivals, 0);
+
+    const blank = $('chartEmpty');
+    if (!total) {
+      chart.classList.add('is-hidden');
+      legend.classList.add('is-hidden');
+      fill(blank, [emptyState(
+        'No movements logged yet',
+        'This fills in once the tracker has seen aircraft come and go at KCVX. '
+        + 'It only counts what it watched happen, so the first day or two looks thin.',
+      )]);
+      return;
+    }
+    chart.classList.remove('is-hidden');
+    legend.classList.remove('is-hidden');
+    fill(blank, []);
+
     const peak = Math.max(1, ...days.map((d) => d.departures + d.arrivals));
+    const px = (n) => (n ? Math.max(3, Math.round((n / peak) * PLOT_PX)) : 0);
+
     fill(chart, days.map((d) => {
+      const moves = d.departures + d.arrivals;
       const bar = el('div', 'bar');
-      const fillEl = el('div', 'fill');
-      fillEl.style.height = `${Math.round(((d.departures + d.arrivals) / peak) * 80)}px`;
-      fillEl.title = `${d.day}: ${d.departures} takeoffs, ${d.arrivals} landings`;
-      bar.appendChild(fillEl);
+      bar.title = `${d.day}\n${plural(d.departures, 'takeoff', 'takeoffs')}, ${plural(d.arrivals, 'landing', 'landings')}`;
+
+      const stack = el('div', 'stack');
+      if (!moves) {
+        stack.appendChild(el('div', 'seg zero'));
+      } else {
+        for (const [n, cls] of [[d.departures, 'dep'], [d.arrivals, 'arr']]) {
+          if (!n) continue;
+          const seg = el('div', `seg ${cls}`);
+          seg.style.height = `${px(n)}px`;
+          stack.appendChild(seg);
+        }
+      }
+      bar.appendChild(stack);
       bar.appendChild(el('div', 'lab', d.day.slice(8)));
       return bar;
     }));
+  }
+
+  async function loadHistory() {
+    const data = await getJson('/api/stats');
+
+    renderChart(data.daily ?? []);
 
     const regulars = $('regularsList');
     if (!data.regulars?.length) {
